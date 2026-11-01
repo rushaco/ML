@@ -1,0 +1,188 @@
+# 1. IMPORT LIBRARIES
+import numpy as np
+import pandas as pd
+import seaborn as sns
+import matplotlib.pyplot as plt
+
+from google.colab import files
+
+from sklearn.model_selection import train_test_split
+from sklearn.preprocessing import OrdinalEncoder
+from sklearn.ensemble import RandomForestClassifier
+
+from sklearn.metrics import (
+    accuracy_score,
+    classification_report,
+    confusion_matrix,
+    ConfusionMatrixDisplay
+)
+
+# 2. UPLOAD DATASET
+uploaded = files.upload()
+
+file_name = next(iter(uploaded))
+
+df = pd.read_csv(
+    file_name,
+    header=None,
+    names=[
+        "buying",
+        "maint",
+        "doors",
+        "persons",
+        "lug_boot",
+        "safety",
+        "class"
+    ]
+)
+
+print("First 5 rows:")
+print(df.head())
+
+print("\nDataset Shape:")
+print(df.shape)
+
+print("\nColumn Names:")
+print(df.columns.tolist())
+
+print("\nDataset Information:")
+df.info()
+
+print("\nMissing Values:")
+print(df.isnull().sum())
+
+# 3. DISPLAY CLASS DISTRIBUTION
+print("\nCar Evaluation Class Distribution:")
+print(df["class"].value_counts())
+
+df["class"].value_counts().plot(kind="bar")
+
+plt.xlabel("Car Evaluation Class")
+plt.ylabel("Number of Cars")
+plt.title("Distribution of Car Classes")
+plt.show()
+
+# 4. SEPARATE FEATURES AND TARGET
+X = df.drop("class", axis=1)
+y = df["class"]
+
+print("\nFeatures:")
+print(X.head())
+
+print("\nTarget:")
+print(y.head())
+
+# 5. ENCODE CATEGORICAL FEATURES
+categories = [
+    ["low", "med", "high", "vhigh"],
+    ["low", "med", "high", "vhigh"],
+    ["2", "3", "4", "5more"],
+    ["2", "4", "more"],
+    ["small", "med", "big"],
+    ["low", "med", "high"]
+]
+
+encoder = OrdinalEncoder(categories=categories)
+
+X_encoded = encoder.fit_transform(X)
+
+print("\nEncoded Features:")
+print(X_encoded[:5])
+
+# 6. SPLIT DATASET
+X_train, X_test, y_train, y_test = train_test_split(
+    X_encoded,
+    y,
+    test_size=0.2,
+    random_state=42,
+    stratify=y
+)
+
+print("\nTraining Data:", X_train.shape)
+print("Testing Data:", X_test.shape)
+
+# 7. CREATE RANDOM FOREST CLASSIFIER
+rf_model = RandomForestClassifier(
+    n_estimators=200,
+    random_state=42,
+    class_weight="balanced"
+)
+
+# 8. TRAIN THE MODEL
+rf_model.fit(X_train, y_train)
+
+print("\nRandom Forest Model Trained Successfully!")
+
+# 9. MAKE PREDICTIONS
+y_pred = rf_model.predict(X_test)
+
+print("\nPredicted Values:")
+print(y_pred[:20])
+
+print("\nActual Values:")
+print(y_test.iloc[:20].values)
+
+# 10. CALCULATE ACCURACY
+accuracy = accuracy_score(y_test, y_pred)
+
+print("\nRandom Forest Accuracy:", accuracy)
+print("Accuracy Percentage:", accuracy * 100, "%")
+
+# 11. CLASSIFICATION REPORT
+print("\nClassification Report:")
+
+print(
+    classification_report(
+        y_test,
+        y_pred,
+        zero_division=0
+    )
+)
+
+# 12. CONFUSION MATRIX
+cm = confusion_matrix(
+    y_test,
+    y_pred,
+    labels=rf_model.classes_
+)
+
+disp = ConfusionMatrixDisplay(
+    confusion_matrix=cm,
+    display_labels=rf_model.classes_
+)
+
+disp.plot(cmap="Blues")
+
+plt.title("Car Evaluation - Random Forest")
+plt.show()
+
+# 13. FEATURE IMPORTANCE
+importance = rf_model.feature_importances_
+
+plt.figure(figsize=(8, 5))
+
+plt.bar(X.columns, importance)
+
+plt.xlabel("Features")
+plt.ylabel("Importance")
+plt.title("Feature Importance - Random Forest")
+
+plt.xticks(rotation=45)
+plt.tight_layout()
+plt.show()
+
+# 14. PREDICT A NEW CAR
+new_car = pd.DataFrame({
+    "buying": ["low"],
+    "maint": ["low"],
+    "doors": ["4"],
+    "persons": ["4"],
+    "lug_boot": ["big"],
+    "safety": ["high"]
+})
+
+new_car_encoded = encoder.transform(new_car)
+
+prediction = rf_model.predict(new_car_encoded)
+
+print("\nPredicted Car Evaluation:", prediction[0])
