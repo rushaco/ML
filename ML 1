@@ -1,0 +1,72 @@
+import pandas as pd
+import matplotlib.pyplot as plt
+
+from sklearn.preprocessing import StandardScaler
+from sklearn.decomposition import PCA
+
+
+df = pd.read_csv("Wine.csv")
+
+print("First 5 rows:")
+print(df.head())
+
+print("\nDataset shape:", df.shape)
+print("\nColumns:")
+print(df.columns)
+
+X = df.iloc[:, :-1]
+y = df.iloc[:, -1]
+
+
+scaler = StandardScaler()
+X_scaled = scaler.fit_transform(X)
+
+print("\nStandardized Data:")
+print(X_scaled[:5])
+
+
+pca = PCA(n_components=2)
+X_pca = pca.fit_transform(X_scaled)
+
+print("\nTransformed Data using PCA:")
+print(X_pca[:5])
+
+
+print("\nExplained Variance Ratio:")
+print(pca.explained_variance_ratio_)
+
+print("\nTotal Variance captured by 2 PCs:",
+      pca.explained_variance_ratio_.sum())
+
+pca_df = pd.DataFrame(
+    X_pca,
+    columns=["Principal Component 1",
+             "Principal Component 2"]
+)
+
+pca_df["Target"] = y.values
+
+print("\nPCA DataFrame:")
+print(pca_df.head())
+
+
+plt.figure(figsize=(8, 6))
+
+classes = y.unique()
+
+for cls in classes:
+    data = pca_df[pca_df["Target"] == cls]
+
+    plt.scatter(
+        data["Principal Component 1"],
+        data["Principal Component 2"],
+        label=str(cls),
+        alpha=0.7
+    )
+
+plt.xlabel("Principal Component 1")
+plt.ylabel("Principal Component 2")
+plt.title("PCA - Wine Dataset")
+plt.legend()
+plt.grid(True)
+plt.show()
