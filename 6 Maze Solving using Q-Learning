@@ -1,0 +1,193 @@
+# 1. IMPORT LIBRARIES
+import numpy as np
+import matplotlib.pyplot as plt
+import random
+
+# 2. CREATE AND DISPLAY MAZE
+maze = np.array([
+    [0, 0, 0, 1, 0, 0],
+    [1, 1, 0, 1, 0, 1],
+    [0, 0, 0, 0, 0, 1],
+    [0, 1, 1, 1, 0, 0],
+    [0, 0, 0, 1, 1, 0],
+    [1, 1, 0, 0, 0, 0]
+])
+
+start = (0, 0)
+goal = (5, 5)
+
+plt.figure(figsize=(6, 6))
+
+plt.imshow(maze, cmap="gray_r")
+
+plt.scatter(start[1], start[0], s=200, label="Start")
+plt.scatter(goal[1], goal[0], s=200, label="Goal")
+
+plt.xticks(range(6))
+plt.yticks(range(6))
+
+plt.grid()
+plt.legend()
+plt.title("Maze Environment")
+
+plt.show()
+
+# 3. DEFINE ACTIONS AND REWARDS
+actions = {
+    0: (-1, 0),  # Up
+    1: (1, 0),   # Down
+    2: (0, -1),  # Left
+    3: (0, 1)    # Right
+}
+
+def move(state, action):
+
+    r, c = state
+
+    nr = r + actions[action][0]
+    nc = c + actions[action][1]
+
+    # Check boundaries and obstacles
+    if (
+        nr < 0 or nr >= 6 or
+        nc < 0 or nc >= 6 or
+        maze[nr, nc] == 1
+    ):
+        return state, -5
+
+    # Goal reward
+    if (nr, nc) == goal:
+        return (nr, nc), 100
+
+    # Normal movement reward
+    return (nr, nc), -1
+
+
+print("Actions: Up, Down, Left, Right")
+print("Reward for reaching goal: +100")
+print("Penalty for hitting wall: -5")
+print("Reward for normal movement: -1")
+
+# 4. INITIALIZE Q-TABLE
+Q = np.zeros((6, 6, 4))
+
+alpha = 0.8
+gamma = 0.95
+epsilon = 1.0
+
+# 5. TRAIN AGENT USING Q-LEARNING
+episodes = 5000
+
+for episode in range(episodes):
+
+    state = start
+
+    for step in range(100):
+
+        # Epsilon-greedy action selection
+        if random.random() < epsilon:
+            action = random.randint(0, 3)
+        else:
+            action = np.argmax(Q[state])
+
+        new_state, reward = move(state, action)
+
+        # Q-learning update
+        if new_state == goal:
+
+            next_max = 0
+
+        else:
+
+            next_max = np.max(Q[new_state])
+
+        Q[state][action] += alpha * (
+            reward +
+            gamma * next_max -
+            Q[state][action]
+        )
+
+        state = new_state
+
+        if state == goal:
+            break
+
+    # Reduce exploration gradually
+    epsilon = max(0.01, epsilon * 0.995)
+
+print("\nTraining completed!")
+
+# 6. FIND LEARNED OPTIMAL PATH
+state = start
+path = [state]
+
+visited = {state}
+
+for step in range(100):
+
+    action = np.argmax(Q[state])
+
+    new_state, reward = move(state, action)
+
+    # Stop if agent cannot move or repeats a state
+    if new_state == state or new_state in visited:
+        break
+
+    state = new_state
+
+    path.append(state)
+    visited.add(state)
+
+    if state == goal:
+        break
+
+# 7. DISPLAY LEARNED PATH
+print("\nLearned Path:")
+print(path)
+
+print("\nNumber of steps:", len(path) - 1)
+
+if state == goal:
+    print("Goal reached successfully!")
+else:
+    print("Goal not reached. Try increasing training episodes.")
+
+# 8. DISPLAY LEARNED OPTIMAL PATH
+plt.figure(figsize=(6, 6))
+
+plt.imshow(maze, cmap="gray_r")
+
+rows = [p[0] for p in path]
+cols = [p[1] for p in path]
+
+plt.plot(
+    cols,
+    rows,
+    marker="o",
+    linewidth=3,
+    label="Learned Path"
+)
+
+plt.scatter(
+    start[1],
+    start[0],
+    s=200,
+    label="Start"
+)
+
+plt.scatter(
+    goal[1],
+    goal[0],
+    s=200,
+    label="Goal"
+)
+
+plt.xticks(range(6))
+plt.yticks(range(6))
+
+plt.grid()
+plt.legend()
+
+plt.title("Learned Optimal Path using Q-Learning")
+
+plt.show()
