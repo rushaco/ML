@@ -4,7 +4,7 @@ import matplotlib.pyplot as plt
 from sklearn.preprocessing import StandardScaler
 from sklearn.decomposition import PCA
 
-
+# Step 1: Load the dataset
 df = pd.read_csv("Wine.csv")
 
 print("First 5 rows:")
@@ -14,30 +14,32 @@ print("\nDataset shape:", df.shape)
 print("\nColumns:")
 print(df.columns)
 
+# Step 2: Separate features and target
 X = df.iloc[:, :-1]
 y = df.iloc[:, -1]
 
-
+# Step 3: Standardize the features
 scaler = StandardScaler()
 X_scaled = scaler.fit_transform(X)
 
 print("\nStandardized Data:")
 print(X_scaled[:5])
 
-
+# Step 4: Apply PCA
 pca = PCA(n_components=2)
 X_pca = pca.fit_transform(X_scaled)
 
 print("\nTransformed Data using PCA:")
 print(X_pca[:5])
 
-
+# Step 5: Explained Variance
 print("\nExplained Variance Ratio:")
 print(pca.explained_variance_ratio_)
 
 print("\nTotal Variance captured by 2 PCs:",
       pca.explained_variance_ratio_.sum())
 
+# Step 6: Create DataFrame
 pca_df = pd.DataFrame(
     X_pca,
     columns=["Principal Component 1",
@@ -49,7 +51,7 @@ pca_df["Target"] = y.values
 print("\nPCA DataFrame:")
 print(pca_df.head())
 
-
+# Step 7: Visualize PCA results
 plt.figure(figsize=(8, 6))
 
 classes = y.unique()
